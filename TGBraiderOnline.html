@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TGBraider v1</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #121212;
+            color: #E0E0E0;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .container {
+            width: 100%;
+            max-width: 600px;
+            margin: auto;
+            padding: 20px;
+            background-color: #1E1E1E;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        .title {
+            font-size: 28px;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 20px;
+            color: #BB86FC;
+        }
+        .section {
+            display: none;
+        }
+        .section.active {
+            display: block;
+            animation: slideIn 0.5s ease-in-out;
+        }
+        .section-title {
+            font-size: 22px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .label {
+            display: block;
+            font-size: 16px;
+            margin-bottom: 5px;
+        }
+        .input {
+            width: calc(100% - 22px);
+            padding: 10px;
+            border: 1px solid #333;
+            border-radius: 5px;
+            background-color: #333;
+            color: #E0E0E0;
+            margin-bottom: 15px;
+            transition: all 0.3s;
+        }
+        .input:focus {
+            border-color: #BB86FC;
+        }
+        .button {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            background-color: #BB86FC;
+            color: #121212;
+            text-align: center;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-bottom: 20px;
+            transition: background-color 0.3s;
+        }
+        .button:hover {
+            background-color: #9B67E9;
+        }
+        .discord-button {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            background-color: #673AB7;
+            color: #FFFFFF;
+            text-align: center;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: background-color 0.3s;
+        }
+        .discord-button:hover {
+            background-color: #5E35B1;
+        }
+        .checkbox {
+            margin-bottom: 15px;
+        }
+        .messages-sent {
+            font-size: 16px;
+            text-align: center;
+            margin-top: 10px;
+        }
+        nav {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        nav a {
+            margin: 0 15px;
+            text-decoration: none;
+            color: #BB86FC;
+            font-size: 18px;
+        }
+        nav a.active {
+            font-weight: bold;
+            text-decoration: underline;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes slideIn {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="title">TGBraider v1</div>
+        <nav>
+            <a href="#" onclick="showSection('server')" id="link-server">Server</a>
+            <a href="#" onclick="showSection('settings')" id="link-settings">Settings</a>
+        </nav>
+        <div id="server" class="section active">
+            <div class="section-title">Server</div>
+            <label class="label" for="server-id">Server ID:</label>
+            <input type="text" id="server-id" class="input">
+            <label class="label" for="server-message">Message:</label>
+            <input type="text" id="server-message" class="input">
+            <label class="label" for="server-num-messages">Number of Messages:</label>
+            <input type="text" id="server-num-messages" class="input">
+            <button class="button" onclick="startSendingServer()">Send Messages</button>
+            <div class="messages-sent" id="server-messages-sent">Total Messages Sent: 0</div>
+        </div>
+        <div id="settings" class="section">
+            <div class="section-title">Settings</div>
+            <label class="label" for="auth-token">Authorization Token:</label>
+            <input type="password" id="auth-token" class="input">
+            <button class="button" onclick="saveToken()">Save Token</button>
+            <div class="checkbox">
+                <input type="checkbox" id="rate-limit" onchange="toggleRateLimit()">
+                <label for="rate-limit">Enable Anti Rate Limiting</label>
+            </div>
+        </div>
+        <button class="discord-button" onclick="window.open('https://dc.gg/teamgodlybacons')">Discord server</button>
+    </div>
+    <script>
+        let authorization_token = '';
+        let rate_limit_enabled = false;
+        let total_messages_sent_server = 0;
+        let total_messages_sent = 0;
+
+        function showSection(sectionId) {
+            document.querySelectorAll('.section').forEach(section => {
+                section.classList.remove('active');
+            });
+            document.getElementById(sectionId).classList.add('active');
+
+            document.querySelectorAll('nav a').forEach(link => {
+                link.classList.remove('active');
+            });
+            document.getElementById(`link-${sectionId}`).classList.add('active');
+        }
+
+        function startSendingServer() {
+            const server_id = document.getElementById('server-id').value;
+            const message = document.getElementById('server-message').value;
+            const num_messages = parseInt(document.getElementById('server-num-messages').value);
+            sendMessagesToRandomChannel(server_id, message, num_messages);
+        }
+
+        function saveToken() {
+            authorization_token = document.getElementById('auth-token').value;
+            alert('Token saved successfully!');
+        }
+
+        function toggleRateLimit() {
+            rate_limit_enabled = document.getElementById('rate-limit').checked;
+            const status = rate_limit_enabled ? 'enabled' : 'disabled';
+            alert(`Anti rate limiting measure ${status}.`);
+        }
+
+        async function sendMessage(channel_id, message) {
+            const url = `https://discord.com/api/v10/channels/${channel_id}/messages`;
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Authorization': authorization_token,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ content: message, tts: false })
+            });
+            
+            if (rate_limit_enabled && response.status === 429) {
+                const retry_after = (await response.json()).retry_after || 1;
+                await new Promise(resolve => setTimeout(resolve, retry_after));
+            }
+            
+            return response.json();
+        }
+
+        async function sendMessagesToRandomChannel(server_id, message, num_messages) {
+            const response = await fetch(`https://discord.com/api/v10/guilds/${server_id}/channels`, {
+                headers: {
+                    'Authorization': authorization_token,
+                    'Content-Type': 'application/json'
+                }
+            });
+            const channels = await response.json();
+            const text_channels = channels.filter(channel => channel.type === 0);
+
+            const promises = [];
+
+            for (let i = 0; i < num_messages; i++) {
+                const random_channel = text_channels[Math.floor(Math.random() * text_channels.length)];
+                promises.push(sendMessage(random_channel.id, message));
+            }
+
+            const results = await Promise.all(promises);
+            results.forEach((data, index) => {
+                console.log(`Message sent (${index + 1}): ${JSON.stringify(data)}`);
+            });
+
+            total_messages_sent_server += num_messages;
+        }
+
+        setInterval(() => {
+            document.getElementById('server-messages-sent').innerText = `Total Messages Sent: ${total_messages_sent_server}`;
+        }, 1000);
+    </script>
+</body>
+</html>
